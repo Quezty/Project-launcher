@@ -1,0 +1,28 @@
+* {
+    background: #0f0c26;
+    color: white;
+}
+
+Screen {
+    border: ascii #444444;
+}
+
+Input, ListView, ListItem {
+    border: hkey #444444;
+}
+
+Input {
+    width: 80%;
+}
+
+Horizontal {
+    layout: horizontal;
+}
+
+ListView {
+    width: 30%;
+}
+
+Static {
+    width: auto;
+}
