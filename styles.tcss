@@ -4,11 +4,11 @@
 }
 
 Screen {
-    border: ascii #444444;
+    border: round #444444;
 }
 
-Input, ListView, ListItem {
-    border: hkey #444444;
+Input, ListView{
+    border: round #444444;
 }
 
 Input {
@@ -21,6 +21,11 @@ Horizontal {
 
 ListView {
     width: 30%;
+}
+
+ListItem {
+    margin-top: 1;
+    margin-bottom: 1;
 }
 
 Static {
