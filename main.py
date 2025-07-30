@@ -2,6 +2,9 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, ListView, ListItem, Input, Label, Static
 from textual.containers import Horizontal
 from textual.events import Key
+from project_scanner import grab_project_info
+
+PROJECT_ROOT_DIRECTORY = "/home/codespace/repos"
 
 class ProjectLauncher(App):
 
@@ -30,6 +33,7 @@ class ProjectLauncher(App):
         yield Footer()
     
     def on_mount(self) -> None:
+        PROJECTS = grab_project_info(PROJECT_ROOT_DIRECTORY)
         self.searchbar = self.query_one("#Searchbar", Input)
         self.list = self.query_one("#ProjectList", ListView)
         self.set_focus(self.list)
