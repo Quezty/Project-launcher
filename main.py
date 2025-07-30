@@ -1,10 +1,10 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header, ListView, ListItem, Input, Label, Static
+from textual.widgets import Footer, Header, ListView, ListItem, Input, Label, Markdown
 from textual.containers import Horizontal
 from textual.events import Key
 from project_scanner import grab_project_info
 
-PROJECT_ROOT_DIRECTORY = "/home/codespace/repos"
+PROJECT_ROOT_DIRECTORY = "/home/joachims/repos"
 
 class ProjectLauncher(App):
 
@@ -23,19 +23,27 @@ class ProjectLauncher(App):
         yield Input(id="Searchbar")
         yield Horizontal(
             ListView(
-                ListItem(Label("One")),
-                ListItem(Label("Two")),
-                ListItem(Label("Three")),
                 id="ProjectList"
             ),
-            Static("test")
+            Markdown(
+                "Loading...",
+                id="MarkdownViewer"
+            )
         )
         yield Footer()
-    
-    def on_mount(self) -> None:
+
+    async def on_mount(self) -> None:
         PROJECTS = grab_project_info(PROJECT_ROOT_DIRECTORY)
         self.searchbar = self.query_one("#Searchbar", Input)
         self.list = self.query_one("#ProjectList", ListView)
+        self.markdown = self.query_one("#MarkdownViewer", Markdown)
+
+        for project in PROJECTS:
+            await self.list.append(ListItem(Label(project.name)))
+
+        self.markdown.update(PROJECTS[0].markdown)
+
+        self.list.index = 0
         self.set_focus(self.list)
 
     def on_key(self, event: Key) -> None:
@@ -45,8 +53,8 @@ class ProjectLauncher(App):
                 event.stop()
             elif event.key == "k":
                 self.list.index = max(self.list.index - 1, 0)
-                event.stop()
-        
+                event.stop 
+
         if self.focused == self.searchbar:
             if event.key == "escape":
                 self.set_focus(self.list)
