@@ -1,1 +1,1 @@
-Make function for re-drawing UI, clean-up variable naming
+Fix error regarding incorrect markdown appearing after search
