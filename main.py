@@ -15,11 +15,14 @@ class ProjectSearchbar(Input):
         ("ctrl+d", "clear_search", "Clear searchbar")
     ]
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.value = ""
+
     class BlurRequested(Message):
         def __init__(self, sender: "ProjectSearchbar") -> None:
             super().__init__()
             self.sender = sender
-            self.value = ""
 
     def action_blur_and_move_focus(self) -> None:
         """Sends blur message to App class"""
