@@ -31,7 +31,7 @@ def grab_project_info(directory: str) -> list[DirectoryInfo]:
                         if file.name in ("README.md", "readme.md"):
                             readme_file_path = current_project_directory + "/" + file.name
                             with open(readme_file_path, "r", encoding="utf-8") as md_file:
-                                markdown_content = md_file.read
+                                markdown_content = md_file.read()
 
                             project_info = DirectoryInfo(entry.name, current_project_directory, markdown_content)
                             objects.append(project_info)
