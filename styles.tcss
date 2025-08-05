@@ -5,6 +5,7 @@
 
 Screen {
     border: round #444444;
+    width: 100%;
 }
 
 Input, ListView{
@@ -28,6 +29,6 @@ ListItem {
     margin-bottom: 1;
 }
 
-Static {
-    width: auto;
+Markdown {
+    width: 70%;
 }
