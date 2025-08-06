@@ -24,6 +24,10 @@ class ProjectSearchbar(Input):
             super().__init__()
             self.sender = sender
 
+    def update_value(self) -> None:
+        self.value = ""
+
+
     def action_blur_and_move_focus(self) -> None:
         """Sends blur message to App class"""
         self.post_message(self.BlurRequested(self))
@@ -45,7 +49,8 @@ class ProjectLauncher(App):
         ("q", "quit", "quit the app"),
         ("s", "focus_searchbar", "search"),
         ("k", "move_up", "move up"),
-        ("j", "move_down", "move down")
+        ("j", "move_down", "move down"),
+        ("ctrl+d", "clear_search", "Clear searchbar")
     ]
 
     selected_index = reactive(0)
@@ -59,7 +64,7 @@ class ProjectLauncher(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield ProjectSearchbar(id="Searchbar")
+        yield ProjectSearchbar()
         yield Horizontal(
             ListView(
                 id="ProjectList"
@@ -73,7 +78,7 @@ class ProjectLauncher(App):
 
     async def on_mount(self) -> None:
         self.PROJECTS = grab_project_info(PROJECT_ROOT_DIRECTORY)
-        self.searchbar = self.query_one("#Searchbar", ProjectSearchbar)
+        self.searchbar = self.query_one(ProjectSearchbar)
         self.list = self.query_one("#ProjectList", ListView)
         self.markdown = self.query_one("#MarkdownViewer", Markdown)
 
@@ -98,23 +103,29 @@ class ProjectLauncher(App):
         """Focuses searchbar"""
         self.set_focus(self.searchbar)
 
+    def action_clear_search(self) -> None:
+        """Clears searchbar"""
+        self.searchbar.update_value()
+
     async def on_input_changed(self, event: Input.Changed) -> None:
         filter = event.value
         self.list.clear()
         self.markdown.update("searching...")
-        filtered_projects = self.project_filter(self.PROJECTS, filter)
+        self.filtered_projects = self.project_filter(self.PROJECTS, filter)
 
-        for project in filtered_projects:
+        for project in self.filtered_projects:
             await self.list.append(ListItem(Label(project.name)))
 
         try:
-            self.markdown.update(filtered_projects[0].markdown)
+            self.markdown.update(self.filtered_projects[0].markdown)
         except IndexError:
             self.markdown.update(f"No project found matching string {filter}!")
 
 
     def on_project_searchbar_blur_requested(self, event: ProjectSearchbar.BlurRequested) -> None:
         self.set_focus(self.list)
+        self.selected_index = 0
+        self.list.index = 0
 
 
     def watch_selected_index(self, value: int) -> None:
