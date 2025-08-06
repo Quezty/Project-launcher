@@ -51,6 +51,7 @@ class ProjectLauncher(App):
         ("k", "move_up", "move up"),
         ("j", "move_down", "move down"),
         ("ctrl+d", "clear_search", "Clear searchbar")
+        ("enter", "choose_project", "Open project")
     ]
 
     selected_index = reactive(0)
