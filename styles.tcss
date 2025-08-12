@@ -1,34 +1,64 @@
 * {
-    background: #0f0c26;
-    color: white;
+    background: black;
 }
 
-Screen {
-    border: round #444444;
-    width: 100%;
+Header, Footer {
+    color: #ffffff;
+    padding: 0 1;
+    min-height: 3;
+    text-style: bold;
 }
 
-Input, ListView{
-    border: round #444444;
+Header { border-bottom: heavy #b5b5b5ff; }
+Footer { 
+    border-top: heavy #b5b5b5ff; 
 }
 
-Input {
-    width: 80%;
+ProjectSearchbar {
+    color: #ffffff;
+    border: round #b5b5b5ff;
+    padding: 0 1;
+    height: 3;
 }
 
 Horizontal {
-    layout: horizontal;
+    grid-gutter: 1;
 }
 
-ListView {
+#ProjectList,
+ListView#ProjectList {
+    color: #dcdcdc;
+    border: round #b5b5b5ff;
+    padding: 0 1;
     width: 30%;
+    min-width: 28;
+    height: 100%;
+    min-height: 6;
+    overflow: auto;
 }
 
-ListItem {
-    margin-top: 1;
-    margin-bottom: 1;
+#ProjectList ListItem,
+ListView#ProjectList ListItem {
+    padding: 0 1;
+    height: 1;
+    color: #dcdcdc;
 }
 
-Markdown {
+ListView#ProjectList ListItem.highlight{
+    color: #ffffff;
+    text-style: italic;
+}
+
+
+#MarkdownViewer {
+    border: round #b5b5b5ff;
+    color: #abb2bf;
+    padding: 1;
     width: 70%;
+    height: 100%;
+    min-width: 40;
+}
+
+#ProjectList:focus, ProjectSearchbar:focus{
+    border: round #ffffff;
 }
