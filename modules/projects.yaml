@@ -1,0 +1,5 @@
+Projects:
+- name: test
+  path: somelpath
+- name: test2
+  path: anotherpath

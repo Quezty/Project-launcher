@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+import yaml
 
 @dataclass
 class DirectoryInfo:
@@ -7,7 +8,7 @@ class DirectoryInfo:
     path: str
     markdown: str
 
-PROJECT_DIRECTORY = "/home/codespace/repos"
+PROJECT_DIRECTORY = "/home/joachims/repos"
 
 def grab_project_info(directory: str) -> list[DirectoryInfo]:
     """ Grabs readme information for all projects in given directory
@@ -36,6 +37,37 @@ def grab_project_info(directory: str) -> list[DirectoryInfo]:
                             project_info = DirectoryInfo(entry.name, current_project_directory, markdown_content)
                             objects.append(project_info)
     return objects
+
+def grab_project_info_yaml(directory: str):
+    with os.scandir(directory) as root_dir:
+        for entry in root_dir:
+            if not entry.name.startswith('.') and entry.is_dir():
+                current_project_directory = directory + "/" + entry.name
+                print()
+
+
+
+data = {
+        'Projects': [
+            {'name': 'test', 'path': 'somelpath'},
+            {'name': 'test2', 'path': 'anotherpath'}
+        ]
+}
+
+yaml_output = yaml.dump(data, default_flow_style=False)
+
+with open('projects.yaml', 'w') as f:
+    yaml.dump(data, f, sort_keys=False)
+    f.close()
+
+with open('projects.yaml', 'r') as f:
+    data = yaml.safe_load(f)
+    output = dict(data)
+    print(output['Projects'][0])
+
+print(yaml_output)
+
+# grab_project_info_yaml(PROJECT_DIRECTORY)
 
 # uncomment line underneath to print the data
 # print(grab_project_info(PROJECT_DIRECTORY))
