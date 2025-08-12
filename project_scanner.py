@@ -36,3 +36,6 @@ def grab_project_info(directory: str) -> list[DirectoryInfo]:
                             project_info = DirectoryInfo(entry.name, current_project_directory, markdown_content)
                             objects.append(project_info)
     return objects
+
+# uncomment line underneath to print the data
+# print(grab_project_info(PROJECT_DIRECTORY))
