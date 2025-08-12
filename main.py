@@ -3,7 +3,7 @@ from textual.widgets import Footer, Header, ListView, ListItem, Input, Label, Ma
 from textual.containers import Horizontal
 from textual.reactive import reactive
 from textual.message import Message
-from project_scanner import grab_project_info
+from modules.project_scanner import grab_project_info
 
 PROJECT_ROOT_DIRECTORY = "/home/codespace/repos"
 
