@@ -1,11 +1,11 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header, ListView, ListItem, Input, Label, Markdown
+from textual.widgets import Footer, Header, ListView, ListItem, Input, Label, Markdown 
 from textual.containers import Horizontal
 from textual.reactive import reactive
 from textual.message import Message
 from project_scanner import grab_project_info
 
-PROJECT_ROOT_DIRECTORY = "/home/codespaces/repos"
+PROJECT_ROOT_DIRECTORY = "/home/codespace/repos"
 
 class ProjectSearchbar(Input):
     """Input field with logic to unblur and clear itself"""
@@ -41,8 +41,6 @@ class ProjectLauncher(App):
     """Main app class"""
 
     CSS_PATH = "styles.tcss"
-    TITLE = "Project Launcher"
-    SUB_TITLE = "A TUI project launcher and project manager"
     THEME = "Tokyo Night"
 
     BINDINGS = [
@@ -50,7 +48,7 @@ class ProjectLauncher(App):
         ("s", "focus_searchbar", "search"),
         ("k", "move_up", "move up"),
         ("j", "move_down", "move down"),
-        ("ctrl+d", "clear_search", "Clear searchbar")
+        ("ctrl+d", "clear_search", "Clear searchbar"),
         ("enter", "choose_project", "Open project")
     ]
 
@@ -64,7 +62,6 @@ class ProjectLauncher(App):
 
 
     def compose(self) -> ComposeResult:
-        yield Header()
         yield ProjectSearchbar()
         yield Horizontal(
             ListView(
@@ -81,8 +78,10 @@ class ProjectLauncher(App):
         self.PROJECTS = grab_project_info(PROJECT_ROOT_DIRECTORY)
         self.searchbar = self.query_one(ProjectSearchbar)
         self.list = self.query_one("#ProjectList", ListView)
+        self.list.border_title = f"Projects - {PROJECT_ROOT_DIRECTORY}"
         self.markdown = self.query_one("#MarkdownViewer", Markdown)
-
+        self.markdown.border_title = f"README.md - {self.PROJECTS[0].path}"
+        
         for project in self.PROJECTS:
             await self.list.append(ListItem(Label(project.name)))
 
@@ -133,8 +132,10 @@ class ProjectLauncher(App):
         self.list.index = value
         if not self.filtered_projects:
             self.markdown.update(self.PROJECTS[value].markdown)
+            self.markdown.border_title = f"README.md - {self.PROJECTS[value].path}"
         else:
             self.markdown.update(self.filtered_projects[value].markdown)
+            self.markdown.border_title = f"README.md - {self.filtered_projects[value].path}"
 
 
     def project_filter(self, project_list: list, filter: str) -> list:
