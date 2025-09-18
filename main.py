@@ -1,11 +1,11 @@
-from modules.project_scanner import grab_project_info
+from modules.project_scanner import grab_project_info, grab_projects, init_projects_config
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Markdown
 
-PROJECT_ROOT_DIRECTORY = "/home/USER/repos"
+PROJECT_ROOT_DIRECTORY = "/home/joachims/repos"
 
 
 class ProjectSearchbar(Input):
@@ -56,7 +56,6 @@ class ProjectLauncher(App):
 
     def __init__(self):
         super().__init__()
-        self.PROJECTS = []
         self.filtered_projects = []
 
     def compose(self) -> ComposeResult:
@@ -67,17 +66,21 @@ class ProjectLauncher(App):
         yield Footer()
 
     async def on_mount(self) -> None:
-        self.PROJECTS = grab_project_info(PROJECT_ROOT_DIRECTORY)
+        init_projects_config(PROJECT_ROOT_DIRECTORY, 'config.yaml')
+        # self.PROJECTS = grab_project_info(PROJECT_ROOT_DIRECTORY)
+        self.PROJECTS = grab_projects('config.yaml')
         self.searchbar = self.query_one(ProjectSearchbar)
         self.list = self.query_one("#ProjectList", ListView)
         self.list.border_title = f"Projects - {PROJECT_ROOT_DIRECTORY}"
         self.markdown = self.query_one("#MarkdownViewer", Markdown)
-        self.markdown.border_title = f"README.md - {self.PROJECTS[0].path}"
+        self.markdown.border_title = f"README.md - {self.PROJECTS['Projects'][0]['readme_path']}"
 
-        for project in self.PROJECTS:
-            await self.list.append(ListItem(Label(project.name)))
 
-        self.markdown.update(self.PROJECTS[0].markdown)
+        for project in self.PROJECTS['Projects']:
+            await self.list.append(ListItem(Label(project['name'])))
+
+
+        self.markdown.update(self.grab_readme_markdown(self.PROJECTS['Projects'][0]['readme_path']))
 
         self.list.index = 0
         self.set_focus(self.list)
@@ -128,22 +131,32 @@ class ProjectLauncher(App):
     def watch_selected_index(self, value: int) -> None:
         self.list.index = value
         if not self.filtered_projects:
-            self.markdown.update(self.PROJECTS[value].markdown)
-            self.markdown.border_title = f"README.md - {self.PROJECTS[value].path}"
+            self.markdown.update(self.grab_readme_markdown(self.PROJECTS['Projects'][value]['readme_path']))
+            self.markdown.border_title = f"README.md - {self.PROJECTS['Projects'][value]['readme_path']}"
         else:
-            self.markdown.update(self.filtered_projects[value].markdown)
+            self.markdown.update(self.grab_readme_markdown(self.PROJECTS['Projects'][value]['readme_path']))
             self.markdown.border_title = (
-                f"README.md - {self.filtered_projects[value].path}"
+                f"README.md - {self.PROJECTS['Projects'][value]['readme_path']}"
             )
 
-    def project_filter(self, project_list: list, filter: str) -> list:
+    def project_filter(self, project_list: list, filter_string: str) -> list:
         filtered_list = []
 
-        for entry in project_list:
-            if filter.lower() in entry.name.lower():
+        for entry in project_list['Projects']:
+            if filter_string.lower() in entry['name'].lower():
                 filtered_list.append(entry)
 
         return filtered_list
+
+    def grab_readme_markdown(self, path: str) -> str:
+        path = f'{path}'
+
+        with open(file=path, mode="r", encoding="utf-8") as md_file:
+            markdown_content = md_file.read()
+
+        return markdown_content
+
+
 
 if __name__ == "__main__":
     app = ProjectLauncher()
