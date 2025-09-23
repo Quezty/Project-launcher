@@ -1,18 +1,21 @@
+from modules.project_scanner import grab_projects, init_projects_config
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header, ListView, ListItem, Input, Label, Markdown 
 from textual.containers import Horizontal
-from textual.reactive import reactive
 from textual.message import Message
-from modules.project_scanner import grab_project_info
+from textual.reactive import reactive
+from textual.widgets import Footer, Input, Label, ListItem, ListView, Markdown
 
-PROJECT_ROOT_DIRECTORY = "/home/codespace/repos"
+PROJECT_ROOT_DIRECTORY = "/home/joachims/repos"
+
 
 class ProjectSearchbar(Input):
     """Input field with logic to unblur and clear itself"""
 
     BINDINGS = [
-        ("ctrl+s", "blur_and_move_focus", "move to list"),
-        ("ctrl+d", "clear_search", "Clear searchbar")
+        ("ctrl+q", "quit", "quit the app"),
+        ("ctrl+s", "blur_and_move_focus", "Move to list"),
+        ("enter", "blur_and_move_focus", " Search"),
+        ("ctrl+d", "clear_search", "Clear searchbar"),
     ]
 
     def __init__(self) -> None:
@@ -26,7 +29,6 @@ class ProjectSearchbar(Input):
 
     def update_value(self) -> None:
         self.value = ""
-
 
     def action_blur_and_move_focus(self) -> None:
         """Sends blur message to App class"""
@@ -49,55 +51,54 @@ class ProjectLauncher(App):
         ("k", "move_up", "move up"),
         ("j", "move_down", "move down"),
         ("ctrl+d", "clear_search", "Clear searchbar"),
-        ("enter", "choose_project", "Open project")
+        ("enter", "choose_project", "Open project"),
     ]
 
     selected_index = reactive(0)
 
     def __init__(self):
         super().__init__()
-        self.PROJECTS = []
         self.filtered_projects = []
-
-
 
     def compose(self) -> ComposeResult:
         yield ProjectSearchbar()
         yield Horizontal(
-            ListView(
-                id="ProjectList"
-            ),
-            Markdown(
-                "Loading...",
-                id="MarkdownViewer"
-            )
+            ListView(id="ProjectList"), Markdown("Loading...", id="MarkdownViewer")
         )
         yield Footer()
 
     async def on_mount(self) -> None:
-        self.PROJECTS = grab_project_info(PROJECT_ROOT_DIRECTORY)
+        init_projects_config(PROJECT_ROOT_DIRECTORY, 'config.yaml')
+        self.PROJECTS = grab_projects('config.yaml')
         self.searchbar = self.query_one(ProjectSearchbar)
         self.list = self.query_one("#ProjectList", ListView)
         self.list.border_title = f"Projects - {PROJECT_ROOT_DIRECTORY}"
         self.markdown = self.query_one("#MarkdownViewer", Markdown)
-        self.markdown.border_title = f"README.md - {self.PROJECTS[0].path}"
-        
-        for project in self.PROJECTS:
-            await self.list.append(ListItem(Label(project.name)))
+        self.markdown.border_title = f"README.md - {self.PROJECTS['Projects'][0]['readme_path']}"
 
-        self.markdown.update(self.PROJECTS[0].markdown)
+
+        for project in self.PROJECTS['Projects']:
+            await self.list.append(ListItem(Label(project['name'])))
+
+
+        self.markdown.update(self.grab_readme_markdown(self.PROJECTS['Projects'][0]['readme_path']))
 
         self.list.index = 0
         self.set_focus(self.list)
 
-
     def action_move_down(self) -> None:
         """Moves cursor 1 item down"""
-        self.selected_index = self.selected_index + 1 if self.selected_index < len(self.list.children) - 1 else self.selected_index
+        self.selected_index = (
+            self.selected_index + 1
+            if self.selected_index < len(self.list.children) - 1
+            else self.selected_index
+        )
 
     def action_move_up(self) -> None:
         """Moves cursor 1 item up"""
-        self.selected_index = self.selected_index - 1 if self.selected_index != 0  else self.selected_index
+        self.selected_index = (
+            self.selected_index - 1 if self.selected_index != 0 else self.selected_index
+        )
 
     def action_focus_searchbar(self) -> None:
         """Focuses searchbar"""
@@ -114,39 +115,52 @@ class ProjectLauncher(App):
         self.filtered_projects = self.project_filter(self.PROJECTS, filter)
 
         for project in self.filtered_projects:
-            await self.list.append(ListItem(Label(project.name)))
+            await self.list.append(ListItem(Label(project['name'])))
 
         try:
-            self.markdown.update(self.filtered_projects[0].markdown)
+            self.markdown.update(self.grab_readme_markdown(self.filtered_projects[0]['readme_path']))
         except IndexError:
             self.markdown.update(f"No project found matching string {filter}!")
 
-
-    def on_project_searchbar_blur_requested(self, event: ProjectSearchbar.BlurRequested) -> None:
+    def on_project_searchbar_blur_requested(
+        self, event: ProjectSearchbar.BlurRequested
+    ) -> None:
         self.set_focus(self.list)
         self.selected_index = 0
         self.list.index = 0
 
-
     def watch_selected_index(self, value: int) -> None:
         self.list.index = value
         if not self.filtered_projects:
-            self.markdown.update(self.PROJECTS[value].markdown)
-            self.markdown.border_title = f"README.md - {self.PROJECTS[value].path}"
+            self.markdown.update(self.grab_readme_markdown(self.PROJECTS['Projects'][value]['readme_path']))
+            self.markdown.border_title = f"README.md - {self.PROJECTS['Projects'][value]['readme_path']}"
         else:
-            self.markdown.update(self.filtered_projects[value].markdown)
-            self.markdown.border_title = f"README.md - {self.filtered_projects[value].path}"
+            self.markdown.update(self.grab_readme_markdown(self.filtered_projects[value]['readme_path']))
+            self.markdown.border_title = (
+                f"README.md - {self.filtered_projects[value]['readme_path']}"
+            )
 
 
-    def project_filter(self, project_list: list, filter: str) -> list:
+    def project_filter(self, projects: dict, filter_string: str) -> list:
         filtered_list = []
 
-        for entry in project_list:
-            if filter.lower() in entry.name.lower():
+        for entry in projects['Projects']:
+            if filter_string.lower() in entry['name'].lower():
                 filtered_list.append(entry)
 
-
         return filtered_list
+
+
+
+    def grab_readme_markdown(self, path: str) -> str:
+        path = f'{path}'
+
+        with open(file=path, mode="r", encoding="utf-8") as md_file:
+            markdown_content = md_file.read()
+
+        return markdown_content
+
+
 
 if __name__ == "__main__":
     app = ProjectLauncher()

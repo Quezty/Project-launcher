@@ -1,4 +1,4 @@
-import os
+from os import scandir
 from dataclasses import dataclass
 import yaml
 
@@ -10,64 +10,51 @@ class DirectoryInfo:
 
 PROJECT_DIRECTORY = "/home/joachims/repos"
 
-def grab_project_info(directory: str) -> list[DirectoryInfo]:
-    """ Grabs readme information for all projects in given directory
+
+def init_projects_config(directory: str, filename: str) -> None:
+
+    """ Grab readme, path and name for all projects in input directory
 
     Args:
-        directory(str): root directory for projects
-
-    Returns:
-        list: Returns a list of DirectoryInfo objects, accessible through list_name[index].name/path/markdown
-
+        directory(str): projects folder 
+        filename(str): Name/path of configuration file
     """
 
-    objects = []
 
-    with os.scandir(directory) as root_dir:
+    project_data = {
+            'Projects': [ ]
+            }
+
+    with scandir(directory) as root_dir:
         for entry in root_dir:
             if not entry.name.startswith('.') and entry.is_dir():
                 current_project_directory = directory + "/" + entry.name
-                with os.scandir(current_project_directory) as subdir:
+                with scandir(current_project_directory) as subdir:
                     for file in subdir:
                         if file.name in ("README.md", "readme.md"):
                             readme_file_path = current_project_directory + "/" + file.name
-                            with open(readme_file_path, "r", encoding="utf-8") as md_file:
-                                markdown_content = md_file.read()
 
-                            project_info = DirectoryInfo(entry.name, current_project_directory, markdown_content)
-                            objects.append(project_info)
-    return objects
+                            project_data['Projects'].append({
+                                "name": entry.name,
+                                "path": current_project_directory,
+                                "readme_path": readme_file_path
+                                })
 
-def grab_project_info_yaml(directory: str):
-    with os.scandir(directory) as root_dir:
-        for entry in root_dir:
-            if not entry.name.startswith('.') and entry.is_dir():
-                current_project_directory = directory + "/" + entry.name
-                print()
+    with open(file=filename, mode='w', encoding='utf-8') as file:
+        yaml.dump(project_data, file)
+
+def grab_projects(filename) -> dict:
+    project_data = {}
+
+    with open(file=filename, mode='r', encoding='utf-8') as file:
+        project_data = yaml.safe_load(file)
+
+    return project_data
 
 
-
-data = {
-        'Projects': [
-            {'name': 'test', 'path': 'somelpath'},
-            {'name': 'test2', 'path': 'anotherpath'}
-        ]
-}
-
-yaml_output = yaml.dump(data, default_flow_style=False)
-
-with open('projects.yaml', 'w') as f:
-    yaml.dump(data, f, sort_keys=False)
-    f.close()
-
-with open('projects.yaml', 'r') as f:
-    data = yaml.safe_load(f)
-    output = dict(data)
-    print(output['Projects'][0])
-
-print(yaml_output)
-
-# grab_project_info_yaml(PROJECT_DIRECTORY)
 
 # uncomment line underneath to print the data
-# print(grab_project_info(PROJECT_DIRECTORY))
+# Yes this is my debugging skills so far......
+# grab_projects("testing.yaml")
+
+# init_projects_config(PROJECT_DIRECTORY, "config.yaml")
