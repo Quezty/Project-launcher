@@ -1,9 +1,9 @@
-from modules.project_scanner import grab_project_info, grab_projects, init_projects_config
+from modules.project_scanner import grab_projects, init_projects_config
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Markdown
+from textual.widgets import Footer, Input, Label, ListItem, ListView, Markdown
 
 PROJECT_ROOT_DIRECTORY = "/home/joachims/repos"
 
@@ -12,7 +12,9 @@ class ProjectSearchbar(Input):
     """Input field with logic to unblur and clear itself"""
 
     BINDINGS = [
-        ("ctrl+s", "blur_and_move_focus", "move to list"),
+        ("ctrl+q", "quit", "quit the app"),
+        ("ctrl+s", "blur_and_move_focus", "Move to list"),
+        ("enter", "blur_and_move_focus", " Search"),
         ("ctrl+d", "clear_search", "Clear searchbar"),
     ]
 
@@ -67,7 +69,6 @@ class ProjectLauncher(App):
 
     async def on_mount(self) -> None:
         init_projects_config(PROJECT_ROOT_DIRECTORY, 'config.yaml')
-        # self.PROJECTS = grab_project_info(PROJECT_ROOT_DIRECTORY)
         self.PROJECTS = grab_projects('config.yaml')
         self.searchbar = self.query_one(ProjectSearchbar)
         self.list = self.query_one("#ProjectList", ListView)
@@ -114,10 +115,10 @@ class ProjectLauncher(App):
         self.filtered_projects = self.project_filter(self.PROJECTS, filter)
 
         for project in self.filtered_projects:
-            await self.list.append(ListItem(Label(project.name)))
+            await self.list.append(ListItem(Label(project['name'])))
 
         try:
-            self.markdown.update(self.filtered_projects[0].markdown)
+            self.markdown.update(self.grab_readme_markdown(self.filtered_projects[0]['readme_path']))
         except IndexError:
             self.markdown.update(f"No project found matching string {filter}!")
 
@@ -134,19 +135,22 @@ class ProjectLauncher(App):
             self.markdown.update(self.grab_readme_markdown(self.PROJECTS['Projects'][value]['readme_path']))
             self.markdown.border_title = f"README.md - {self.PROJECTS['Projects'][value]['readme_path']}"
         else:
-            self.markdown.update(self.grab_readme_markdown(self.PROJECTS['Projects'][value]['readme_path']))
+            self.markdown.update(self.grab_readme_markdown(self.filtered_projects[value]['readme_path']))
             self.markdown.border_title = (
-                f"README.md - {self.PROJECTS['Projects'][value]['readme_path']}"
+                f"README.md - {self.filtered_projects[value]['readme_path']}"
             )
 
-    def project_filter(self, project_list: list, filter_string: str) -> list:
+
+    def project_filter(self, projects: dict, filter_string: str) -> list:
         filtered_list = []
 
-        for entry in project_list['Projects']:
+        for entry in projects['Projects']:
             if filter_string.lower() in entry['name'].lower():
                 filtered_list.append(entry)
 
         return filtered_list
+
+
 
     def grab_readme_markdown(self, path: str) -> str:
         path = f'{path}'
